@@ -1,7 +1,5 @@
 FROM ghcr.io/puppeteer/puppeteer:23.1.0
 
-ARG SCRAPE_TYPE
-
 WORKDIR /app
 
 RUN chown -Rh $user:$user /app
@@ -16,6 +14,6 @@ COPY . .
 
 RUN yarn build
 
-EXPOSE 80 8080
+EXPOSE 80 3000
 
 CMD ["yarn", "start"]

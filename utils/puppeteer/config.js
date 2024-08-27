@@ -1,6 +1,4 @@
 import { isDev } from '~/config'
-import { getRandomProxy } from '~/utils/proxy'
-import { NO_PROXY_SCRAPE_TYPES } from '~/constants'
 
 export default async config => {
   const puppeteerOptions = {
@@ -53,12 +51,6 @@ export default async config => {
       '--use-gl=swiftshader',
       '--use-mock-keychain',
     ],
-  }
-
-  if (!NO_PROXY_SCRAPE_TYPES.includes(process.env.SCRAPE_TYPE)) {
-    const randomProxy = await getRandomProxy()
-
-    puppeteerOptions.args.push(`--proxy-server=${randomProxy.proxy.origin}`)
   }
 
   if (!isDev) {
