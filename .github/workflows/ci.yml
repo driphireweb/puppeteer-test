@@ -1,0 +1,55 @@
+name: Build and Deploy Scraper to AWS EC2
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  IMAGE_NAME: puppeteer-test
+  AWS_EC2_USER: ec2-user
+  AWS_EC2_HOST: ${{ secrets.AWS_EC2_HOST }}
+  SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Create env file
+        run: echo "${{ secrets.ENV_FILE }}" > .env
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build Docker image
+        run: |
+          docker buildx create --use && \
+          docker buildx build \
+            --tag ${{ env.IMAGE_NAME }} \
+            --output type=docker .
+
+      - name: Save Docker image to file
+        run: docker save ${{ env.IMAGE_NAME }} -o image.tar
+
+      - name: Install SSH client
+        run: sudo apt-get install -y openssh-client
+
+      - name: Add SSH key
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Copy Docker image to EC2
+        run: scp -o StrictHostKeyChecking=no image.tar ${{ env.AWS_EC2_USER }}@${{ env.AWS_EC2_HOST }}:/home/${{ env.AWS_EC2_USER }}/
+
+      - name: Deploy Docker image on EC2
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ env.AWS_EC2_USER }}@${{ env.AWS_EC2_HOST }} << 'EOF'
+            docker load -i /home/${{ env.AWS_EC2_USER }}/image.tar
+            docker stop ${{ env.IMAGE_NAME }} || true
+            docker rm ${{ env.IMAGE_NAME }} || true
+            docker run -d --name ${{ env.IMAGE_NAME }} --env-file /home/${{ env.AWS_EC2_USER }}/.env ${{ env.IMAGE_NAME }}
+          EOF

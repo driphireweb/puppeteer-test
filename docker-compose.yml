@@ -1,0 +1,17 @@
+version: "3.8"
+
+services:
+  app:
+    container_name: puppeteer-test
+    build:
+      context: .
+      args:
+        - PORT=8080
+      dockerfile: Dockerfile
+    volumes:
+      - ".:/app"
+      - "/app/node_modules"
+    ports:
+      - 8080:8080
+    env_file:
+      - .env

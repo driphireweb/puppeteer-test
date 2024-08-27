@@ -1,0 +1,31 @@
+{
+  "presets": [
+    [
+      "@babel/preset-env",
+      {
+        "targets": {
+          "node": "20"
+        }
+      }
+    ]
+  ],
+  "plugins": [
+    "add-module-exports",
+    [
+      "inline-dotenv",
+      {
+        "path": "./.env",
+        "unsafe": true
+      }
+    ],
+    [
+      "module-resolver",
+      {
+        "root": ["."],
+        "alias": {
+          "~": "./lib"
+        }
+      }
+    ]
+  ]
+}
